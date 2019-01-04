@@ -269,6 +269,7 @@ def sync_notification(path_prefix, course_id):
 if __name__ == '__main__':
     ignore = codecs.open('file.ignore', mode='r', encoding='utf-8').read().split() if os.path.exists('file.ignore') else []
     os.remove(large_file_list)
+    os.remove(failed_file_list)
     username = input('username: ')
     password = getpass.getpass('password: ')
     if login(username, password):
