@@ -255,7 +255,6 @@ def sync_notification(path_prefix, course_id):
     if not os.path.exists(path_prefix):
         os.makedirs(path_prefix)
     final_url = urllib.request.urlopen(url+'MultiLanguage/public/bbs/getnoteid_student.jsp?course_id=' + str(course_id)).geturl()
-    print("URL after redirection: " + final_url)
     root = bs(get_page(final_url), 'html.parser')
     for ele in root.findAll('a'):
         note_path = os.path.join(path_prefix, ele.text+'.html')
