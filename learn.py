@@ -55,7 +55,14 @@ def open_page(uri, values = {}):
 def get_page(uri, values = {}):
     data = open_page(uri, values)
     if data:
-        return data.read().decode()
+        succ = False
+        while not succ:
+            try:
+                res = data.read().decode()
+                succ = True
+            except ConnectionError as e:
+                print(e)
+        return res
 
 def login(username, password):
     login_uri = 'MultiLanguage/lesson/teacher/loginteacher.jsp'
