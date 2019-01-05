@@ -290,6 +290,9 @@ if __name__ == '__main__':
     ignore = codecs.open('file.ignore', mode='r', encoding='utf-8').read().split() if os.path.exists('file.ignore') else []
     try:
         os.remove(large_file_list)
+    except FileNotFoundError:
+        pass
+    try:    
         os.remove(failed_file_list)
     except FileNotFoundError:
         pass
