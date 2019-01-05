@@ -20,7 +20,7 @@ sudo pip3 install bs4
 
 已经毕业的同学请选择type_number = 3，即全部网络课程
 
-如果不想下载某门课程（比如实验室科研探究），可以在同级目录下新建文件`.ignore`，并添加该课程完整名字，比如：
+如果不想下载某门课程（比如实验室科研探究），可以在同级目录下新建文件`file.ignore`，并添加该课程完整名字，比如：
 
 ```bash
 ➜  wjy git:(master) ✗ cat .ignore 
