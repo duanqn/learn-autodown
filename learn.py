@@ -26,6 +26,8 @@ failed_file_list = 'failed_download.txt'
 
 pool_lock = threading.Lock()
 
+global_download_threads = []
+
 class jobPool:
     def __init__(self, num):
         # 0 - not started
@@ -103,13 +105,13 @@ def fastDownload(url, filename):
     pass
 
 def recordLargeDownload(url, path, size):
-    with open(large_file_list, 'w+') as f:
+    with open(large_file_list, 'a') as f:
         f.write(url + '\n')
         f.write(path + '\n')
         f.write(str(size) + '\n')
 
 def recordFailedDownload(url, path):
-    with open(failed_file_list, 'w+') as f:
+    with open(failed_file_list, 'a') as f:
         f.write(url + '\n')
         f.write(path + '\n')
 
@@ -131,12 +133,18 @@ def simpleDownload(url, path):
                 print(e)
             succ = True
 
+def largeDownload(url, path):
+    download_thread = threading.Thread(target=simpleDownload, args=(url, path))
+    global_download_threads.append(download_thread)
+    download_thread.start()
+
 def download(url, path):
     size = querySize(url)
     if size <= simple_download_threshold:
         simpleDownload(url, path)
     else:
-        print("File " + path +" is too large (" + str(size) +" bytes). Mark for delayed downloading.")
+        print("File " + path +" is " + str(size) +" bytes. Use large file mode.")
+        largeDownload(url, path)
         recordLargeDownload(url, path, size)
 
 def NTFSSan(s):
@@ -254,8 +262,15 @@ def sync_hw(path_prefix, course_id):
 def sync_notification(path_prefix, course_id):
     if not os.path.exists(path_prefix):
         os.makedirs(path_prefix)
-    final_url = urllib.request.urlopen(url+'MultiLanguage/public/bbs/getnoteid_student.jsp?course_id=' + str(course_id)).geturl()
+    succ = False
+    while not succ:
+        try:
+            final_url = urllib.request.urlopen(url+'MultiLanguage/public/bbs/getnoteid_student.jsp?course_id=' + str(course_id)).geturl()
+            succ = True
+        except Exception as e:
+            print(e)
     root = bs(get_page(final_url), 'html.parser')
+    threads = []
     for ele in root.findAll('a'):
         note_path = os.path.join(path_prefix, ele.text+'.html')
         note_path = NTFSSan(note_path)
@@ -264,12 +279,20 @@ def sync_notification(path_prefix, course_id):
         if not os.path.exists(note_path):
             print('Copy note ' + ele.text)
             print('From ' + uri)
-            download(uri, note_path)
+            download_thread = threading.Thread(target=download, args=(uri, note_path))
+            threads.append(download_thread)
+            download_thread.start()
+
+    for thread in threads:
+        thread.join()
 
 if __name__ == '__main__':
     ignore = codecs.open('file.ignore', mode='r', encoding='utf-8').read().split() if os.path.exists('file.ignore') else []
-    os.remove(large_file_list)
-    os.remove(failed_file_list)
+    try:
+        os.remove(large_file_list)
+        os.remove(failed_file_list)
+    except FileNotFoundError:
+        pass
     username = input('username: ')
     password = getpass.getpass('password: ')
     if login(username, password):
@@ -289,3 +312,5 @@ if __name__ == '__main__':
                 sync_file(os.path.join(name, "Files"), course_id)
             sync_hw(os.path.join(name, "Homework"), course_id)
             sync_notification(os.path.join(name, "Notes"), course_id)
+    for thread in global_download_threads:
+        thread.join()
