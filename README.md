@@ -23,7 +23,7 @@ sudo pip3 install bs4
 如果不想下载某门课程（比如实验室科研探究），可以在同级目录下新建文件`file.ignore`，并添加该课程完整名字，比如：
 
 ```bash
-➜  wjy git:(master) ✗ cat .ignore 
+➜  wjy git:(master) ✗ cat file.ignore 
 数据结构(2)(2017-2018秋季学期)
 实验室科研探究（4）(90)(2016-2017秋季学期)
 实验室科研探究（3）(90)(2016-2017春季学期)
