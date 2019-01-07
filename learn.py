@@ -8,6 +8,7 @@ import threading
 import codecs
 import getpass
 import http.cookiejar
+import platform
 from bs4 import BeautifulSoup as bs
 
 url = 'https://learn.tsinghua.edu.cn/'
@@ -147,6 +148,20 @@ def download(url, path):
         largeDownload(url, path)
         recordLargeDownload(url, path, size)
 
+def Sanitize(s):
+    if platform.system() == 'Windows':
+        return NTFSSan(s)
+    elif platform.system() == 'Linux':
+        return EXTSan(s)
+    else:
+        return EXTSan(s)
+
+def EXTSan(s):
+    s = s.replace(u'\xa0', u' ')
+    s = s.rstrip(u' ')
+    p = re.compile(r'[\\&:\*<>\"\?\|]')
+    return p.sub("_", s)
+
 def NTFSSan(s):
     s = s.replace(u'\xa0', u' ')
     s = s.rstrip(u' ')
@@ -221,7 +236,7 @@ def sync_file(path_prefix, course_id):
         uri = comment.next.next.a.get('href')
         filename = link.get('onclick').split('getfilelink=')[-1].split('&id')[0]
         file_path = os.path.join(path_prefix, filename)
-        file_path = NTFSSan(file_path)
+        file_path = Sanitize(file_path)
         if not os.path.exists(file_path):
             print('Download ', name)
             download_thread = threading.Thread(target=download, args=(uri, file_path))
@@ -233,7 +248,7 @@ def sync_file(path_prefix, course_id):
 
 def seek_hw(path, url):
     hw_path = path
-    hw_path = NTFSSan(hw_path)
+    hw_path = Sanitize(hw_path)
     if not os.path.exists(hw_path):
         os.makedirs(hw_path)
     soup = bs(get_page(url), 'html.parser')
@@ -241,7 +256,7 @@ def seek_hw(path, url):
         name = 'upload-'+link.text if link.parent.previous.previous.strip() == '上交作业附件' else link.text
         uri = link.get('href')
         file_path = os.path.join(hw_path, name)
-        file_path = NTFSSan(file_path)
+        file_path = Sanitize(file_path)
         if not os.path.exists(file_path):
             print('Download ', name)
             download(uri, file_path)
@@ -273,7 +288,7 @@ def sync_notification(path_prefix, course_id):
     threads = []
     for ele in root.findAll('a'):
         note_path = os.path.join(path_prefix, ele.text+'.html')
-        note_path = NTFSSan(note_path)
+        note_path = Sanitize(note_path)
         uri = 'MultiLanguage/public/bbs/' + ele.get('href')
         uri = iriToUri(uri)
         if not os.path.exists(note_path):
