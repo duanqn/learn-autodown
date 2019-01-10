@@ -149,6 +149,8 @@ def download(url, path):
         recordLargeDownload(url, path, size)
 
 def Sanitize(s):
+    p_white = re.compile(r'\s')
+    s = p_white.sub(' ', s)
     if platform.system() == 'Windows':
         return NTFSSan(s)
     elif platform.system() == 'Linux':
